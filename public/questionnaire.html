@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solviva Energy — Annual PMS Request Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary:        #1f522b;
+      --primary-light:  #d2ff1e;
+      --accent:         #006ac6;
+      --black:          #000000;
+      --white:          #ffffff;
+      --bg:             #F2F4F7;
+      --card:           #ffffff;
+      --border:         #e3e8ef;
+      --text:           #1a1f2b;
+      --muted:          #6b7280;
+      --input-border:   #d9dee6;
+      --input-focus:    #1f522b;
+      --red:            #dc2626;
+      --section-header: #1f522b;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Page wrapper ── */
+    .page {
+      max-width: 640px;
+      margin: 2rem auto 4rem;
+      padding: 0 1rem;
+    }
+
+    /* ── Brand header ── */
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--primary);
+      border-radius: 12px 12px 0 0;
+    }
+    .brand-header img { height: 36px; }
+    .brand-header-text { color: var(--white); }
+    .brand-header-text h1 { font-size: 1.05rem; font-weight: 700; line-height: 1.3; }
+    .brand-header-text p { font-size: 0.78rem; opacity: 0.8; }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      padding: 2rem 2rem;
+      border: 1px solid var(--border);
+    }
+    .card:last-child { border-radius: 0 0 12px 12px; }
+
+    /* ── Intro text ── */
+    .intro {
+      background: var(--card);
+      padding: 1.5rem 2rem;
+      border: 1px solid var(--border);
+      border-top: none;
+    }
+    .intro h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+    .intro p {
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 0.5rem;
+    }
+    .consent-box {
+      background: #f0f7f1;
+      border-left: 3px solid var(--primary);
+      padding: 0.85rem 1rem;
+      border-radius: 0 6px 6px 0;
+      margin-top: 0.75rem;
+    }
+    .consent-box p {
+      font-size: 0.82rem;
+      color: #374151;
+      margin: 0;
+    }
+
+    /* ── Section header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 2px solid var(--primary-light);
+    }
+    .section-badge {
+      background: var(--primary);
+      color: var(--white);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+    }
+    .section-header h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    /* ── Form grid ── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    /* ── Field ── */
+    .field { display: flex; flex-direction: column; gap: 0.3rem; }
+    label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    label .req { color: var(--red); margin-left: 2px; }
+    label .hint {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid var(--input-border);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--white);
+      transition: border-color 0.15s;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--input-focus);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* ── Radio / Checkbox groups ── */
+    .option-group { display: flex; flex-direction: column; gap: 0.45rem; margin-top: 0.1rem; }
+    .option-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.55rem;
+      cursor: pointer;
+      padding: 0.5rem 0.75rem;
+      border: 1.5px solid var(--input-border);
+      border-radius: 6px;
+      transition: border-color 0.15s, background 0.15s;
+      font-size: 0.86rem;
+      line-height: 1.4;
+    }
+    .option-item:hover { border-color: var(--primary); background: #f0f7f1; }
+    .option-item input[type="radio"],
+    .option-item input[type="checkbox"] {
+      width: auto;
+      padding: 0;
+      border: none;
+      margin-top: 2px;
+      accent-color: var(--primary);
+      flex-shrink: 0;
+    }
+    .option-item.selected {
+      border-color: var(--primary);
+      background: #f0f7f1;
+    }
+
+    /* ── Conditional field ── */
+    .conditional { display: none; margin-top: 0.75rem; }
+    .conditional.visible { display: flex; flex-direction: column; gap: 0.3rem; }
+
+    /* ── Sub-section (site contact) ── */
+    .sub-section {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 0.5rem;
+    }
+    .sub-section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .sub-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+    /* ── Yes/No toggle ── */
+    .yes-no-group { display: flex; gap: 0.75rem; }
+    .yes-no-group .option-item { flex: 1; justify-content: center; }
+
+    /* ── Error state ── */
+    .field-error {
+      font-size: 0.78rem;
+      color: var(--red);
+      display: none;
+    }
+    .field.has-error input,
+    .field.has-error textarea,
+    .field.has-error select {
+      border-color: var(--red);
+    }
+
+    /* ── Submit area ── */
+    .submit-area { margin-top: 1.5rem; }
+    .btn-submit {
+      width: 100%;
+      padding: 0.85rem 1.5rem;
+      background: var(--primary);
+      color: var(--white);
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.01em;
+    }
+    .btn-submit:hover:not(:disabled) { background: #174020; transform: translateY(-1px); }
+    .btn-submit:disabled { background: #9ca3af; cursor: not-allowed; transform: none; }
+    .btn-submit .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast / error message ── */
+    .toast {
+      display: none;
+      padding: 0.85rem 1rem;
+      border-radius: 6px;
+      font-size: 0.87rem;
+      margin-bottom: 1rem;
+    }
+    .toast.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+    .toast.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+
+    /* ── Section divider ── */
+    .section-gap { height: 1.5rem; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      padding: 1.5rem 0 0;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    /* ── Mobile ── */
+    @media (max-width: 560px) {
+      .page { margin: 0 0 3rem; padding: 0; }
+      .brand-header { border-radius: 0; }
+      .card { padding: 1.5rem 1rem; }
+      .intro { padding: 1.25rem 1rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .sub-grid { grid-template-columns: 1fr; }
+      .yes-no-group { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <script>/* __PREFILL_PLACEHOLDER__ */</script>
+
+  <div class="page">
+
+    <!-- Brand Header -->
+    <header class="brand-header">
+      <img src="/pms/solvivalogo2.png" alt="Solviva Energy" onerror="this.style.display='none'" />
+      <div class="brand-header-text">
+        <h1>Annual Preventive Maintenance Service (PMS)</h1>
+        <p>Request Form — Solviva Energy, Inc.</p>
+      </div>
+    </header>
+
+    <!-- Intro -->
+    <div class="intro">
+      <h2>Welcome to Your Annual PMS Request Form</h2>
+      <p>Thank you for taking the time to complete this form! Your responses help our team prepare for a smooth and efficient maintenance visit. Please fill in all required fields (<span style="color:var(--red)">*</span>) as accurately as possible.</p>
+      <div class="consent-box">
+        <p>By submitting this form, the undersigned hereby consents to and authorizes the Solviva Energy, Inc. team to access the site identified herein for the purpose of conducting the Preventive Maintenance Service (PMS). The undersigned further acknowledges and understands that an authorized representative shall be present at the site during the entirety of such access to facilitate entry, accompany the team, and address any matters that may arise during the visit.</p>
+      </div>
+      <p style="margin-top:0.85rem;">After submitting, our Aftersales team will reach out within <strong>2 business days</strong> to confirm your schedule.</p>
+    </div>
+
+    <!-- Main Form -->
+    <form id="pmsForm" novalidate>
+      <input type="hidden" id="token" name="token" />
+      <input type="hidden" id="lead_id" name="lead_id" />
+
+      <!-- ── SECTION A ── -->
+      <div class="card">
+        <div class="section-header">
+          <span class="section-badge">SECTION A</span>
+          <h3>Client &amp; Site Information</h3>
+        </div>
+
+        <div id="formToast" class="toast"></div>
+
+        <div class="form-grid">
+          <div class="field" id="field_last_name">
+            <label for="last_name">Last Name <span class="req">*</span></label>
+            <input type="text" id="last_name" name="last_name" placeholder="e.g. dela Cruz" autocomplete="family-name" />
+            <span class="field-error" id="err_last_name">This field is required.</span>
+          </div>
+
+          <div class="field" id="field_first_name">
+            <label for="first_name">First Name <span class="req">*</span></label>
+            <input type="text" id="first_name" name="first_name" placeholder="e.g. Maria" autocomplete="given-name" />
+            <span class="field-error" id="err_first_name">This field is required.</span>
+          </div>
+
+          <div class="field" id="field_email">
+            <label for="email">Email Address <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" />
+            <span class="field-error" id="err_email">Please enter a valid email address.</span>
+          </div>
+
+          <div class="field" id="field_contact_number">
+            <label for="contact_number">Contact Number <span class="req">*</span></label>
+            <input type="tel" id="contact_number" name="contact_number" placeholder="e.g. 09171234567" autocomplete="tel" />
+            <span class="field-error" id="err_contact_number">This field is required.</span>
+          </div>
+
+          <div class="field full" id="field_site_address">
+            <label for="site_address">Site / Installation Address <span class="req">*</span></label>
+            <textarea id="site_address" name="site_address" rows="2" placeholder="Complete address where the solar system is installed"></textarea>
+            <span class="field-error" id="err_site_address">This field is required.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION B ── -->
+      <div class="card" style="border-top:none;">
+        <div class="section-header">
+          <span class="section-badge">SECTION B</span>
+          <h3>Preferred PMS Schedule</h3>
+        </div>
+
+        <div class="form-grid">
+          <div class="field" id="field_preferred_date">
+            <label for="preferred_date">
+              Preferred PMS Date <span class="req">*</span>
+              <span class="hint">Please select a date at least 10 days from today.</span>
+            </label>
+            <input type="date" id="preferred_date" name="preferred_date" />
+            <span class="field-error" id="err_preferred_date">Please select a date at least 10 days from today.</span>
+          </div>
+
+          <div class="field" id="field_alternative_date">
+            <label for="alternative_date">
+              Alternative Date
+              <span class="hint">Optional but recommended.</span>
+            </label>
+            <input type="date" id="alternative_date" name="alternative_date" />
+          </div>
+
+          <div class="field full" id="field_preferred_time_slot">
+            <label>Preferred Time Slot <span class="req">*</span></label>
+            <div class="option-group" id="time_slot_group">
+              <label class="option-item">
+                <input type="radio" name="preferred_time_slot" value="morning" />
+                <span><strong>Morning</strong> — 8:00 AM to 12:00 PM</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="preferred_time_slot" value="afternoon" />
+                <span><strong>Afternoon</strong> — 1:00 PM to 5:00 PM</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="preferred_time_slot" value="flexible" />
+                <span><strong>Flexible</strong> — any time works</span>
+              </label>
+            </div>
+            <span class="field-error" id="err_preferred_time_slot">Please select a time slot.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION C ── -->
+      <div class="card" style="border-top:none;">
+        <div class="section-header">
+          <span class="section-badge">SECTION C</span>
+          <h3>Site Access Requirements</h3>
+        </div>
+
+        <div class="form-grid">
+          <div class="field full" id="field_panel_location">
+            <label>Panel / Array Location <span class="req">*</span></label>
+            <div class="option-group" id="panel_location_group">
+              <label class="option-item">
+                <input type="radio" name="panel_location" value="Rooftop — single storey (≤ 4 meters)" />
+                <span>Rooftop — <strong>single storey</strong> (≤ 4 meters)</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="panel_location" value="Rooftop — multi-storey (> 4 meters)" />
+                <span>Rooftop — <strong>multi-storey</strong> (&gt; 4 meters)</span>
+              </label>
+            </div>
+            <span class="field-error" id="err_panel_location">Please select the panel location.</span>
+          </div>
+
+          <div class="field full" id="field_access_equipment">
+            <label>
+              Access Equipment Required <span class="req">*</span>
+              <span class="hint">Select all that apply.</span>
+            </label>
+            <div class="option-group" id="access_equipment_group">
+              <label class="option-item">
+                <input type="checkbox" name="access_equipment" value="No special equipment needed" />
+                <span>No special equipment needed</span>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="access_equipment" value="Ladder (client to provide access)" />
+                <span>Ladder (client to provide access)</span>
+              </label>
+              <label class="option-item">
+                <input type="checkbox" name="access_equipment" value="Scaffolding required" />
+                <span>Scaffolding required</span>
+              </label>
+              <label class="option-item" id="equipment_others_item">
+                <input type="checkbox" name="access_equipment" value="Others" id="equipment_others_cb" />
+                <span>Others: <input type="text" id="equipment_others_text" placeholder="Please specify" style="display:inline;width:auto;padding:0.15rem 0.4rem;font-size:0.82rem;margin-left:4px;" /></span>
+              </label>
+            </div>
+            <span class="field-error" id="err_access_equipment">Please select at least one option.</span>
+          </div>
+
+          <div class="field full" id="field_work_permit">
+            <label>Work Permit Required? <span class="req">*</span></label>
+            <div class="option-group" id="work_permit_group">
+              <label class="option-item">
+                <input type="radio" name="work_permit" value="No — our team can enter freely" />
+                <span>No — our team can enter freely</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="work_permit" value="Yes — I will arrange the work permit" />
+                <span>Yes — I will arrange the work permit</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="work_permit" value="Yes — please coordinate with your homeowners association" />
+                <span>Yes — please coordinate with your homeowners association</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="work_permit" value="Not sure — please advise" />
+                <span>Not sure — please advise</span>
+              </label>
+            </div>
+            <span class="field-error" id="err_work_permit">Please select a work permit option.</span>
+          </div>
+
+          <div class="field full conditional" id="field_work_permit_requirements">
+            <label for="work_permit_requirements">If yes, what are the requirements for a work permit?</label>
+            <textarea id="work_permit_requirements" name="work_permit_requirements" rows="2" placeholder="Describe any specific work permit requirements"></textarea>
+          </div>
+
+          <div class="field full">
+            <label style="margin-bottom:0.3rem;">Site Contact Person <span style="font-weight:400;color:var(--muted);">(if different from above)</span></label>
+            <div class="sub-section">
+              <div class="sub-grid">
+                <div class="field">
+                  <label for="site_contact_name" style="font-size:0.78rem;">Name (Last, First)</label>
+                  <input type="text" id="site_contact_name" name="site_contact_name" placeholder="e.g. Reyes, Juan" />
+                </div>
+                <div class="field">
+                  <label for="site_contact_number" style="font-size:0.78rem;">Contact Number</label>
+                  <input type="tel" id="site_contact_number" name="site_contact_number" placeholder="e.g. 09181234567" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field full">
+            <label for="access_instructions">
+              Additional Access Instructions
+              <span class="hint">e.g. gate code, parking area, HOA requirements...</span>
+            </label>
+            <textarea id="access_instructions" name="access_instructions" rows="2" placeholder="Any special instructions for our team to access the site"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION D ── -->
+      <div class="card" style="border-top:none;">
+        <div class="section-header">
+          <span class="section-badge">SECTION D</span>
+          <h3>System Condition &amp; Concerns</h3>
+        </div>
+
+        <div class="form-grid">
+          <div class="field full" id="field_has_issues">
+            <label>Any issues noticed recently? <span class="req">*</span></label>
+            <div class="option-group yes-no-group" id="has_issues_group">
+              <label class="option-item">
+                <input type="radio" name="has_issues" value="no" />
+                <span>No — everything seems to be working fine</span>
+              </label>
+              <label class="option-item">
+                <input type="radio" name="has_issues" value="yes" />
+                <span>Yes — I've noticed some issues</span>
+              </label>
+            </div>
+            <span class="field-error" id="err_has_issues">Please select an option.</span>
+          </div>
+
+          <div class="field full conditional" id="field_issue_description">
+            <label for="issue_description">If yes, please describe</label>
+            <textarea id="issue_description" name="issue_description" rows="3" placeholder="e.g. drop in generation, inverter warnings, physical damage, unusual sounds..."></textarea>
+          </div>
+
+          <div class="field full">
+            <label for="other_requests">Other questions or requests?</label>
+            <textarea id="other_requests" name="other_requests" rows="2" placeholder="Any other concerns or special requests for our Aftersales team"></textarea>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-area">
+          <button type="submit" class="btn-submit" id="submitBtn">
+            Submit PMS Request
+          </button>
+        </div>
+      </div>
+
+    </form>
+
+    <p class="footer">Solviva Energy, Inc. &nbsp;|&nbsp; Annual Preventive Maintenance Service</p>
+  </div>
+
+  <script>
+    // ── Inject server-provided values ─────────────────────────
+    (function () {
+      const prefill = window.__PREFILL__ || {};
+      const token = window.__TOKEN__ || "";
+
+      document.getElementById("token").value = token;
+      document.getElementById("lead_id").value = window.__LEAD_ID__ || "";
+
+      // Prefill Section A from Odoo partner data
+      if (prefill.name) {
+        // Try splitting name into last/first
+        const parts = prefill.name.split(/,\s*| /);
+        if (prefill.name.includes(",")) {
+          // "Last, First" format
+          const [last, ...rest] = prefill.name.split(/,\s*/);
+          document.getElementById("last_name").value = last || "";
+          document.getElementById("first_name").value = rest.join(" ") || "";
+        } else {
+          // "First Last" format — put all in first name
+          document.getElementById("first_name").value = prefill.name;
+        }
+      }
+      if (prefill.email) document.getElementById("email").value = prefill.email;
+      if (prefill.phone) document.getElementById("contact_number").value = prefill.phone;
+      if (prefill.address) document.getElementById("site_address").value = prefill.address;
+    })();
+
+    // ── Set min date for preferred_date (10 days from today) ──
+    (function () {
+      const today = new Date();
+      today.setDate(today.getDate() + 10);
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, "0");
+      const dd = String(today.getDate()).padStart(2, "0");
+      document.getElementById("preferred_date").min = `${yyyy}-${mm}-${dd}`;
+
+      // Alternative date min = today
+      const now = new Date();
+      const ay = now.getFullYear();
+      const am = String(now.getMonth() + 1).padStart(2, "0");
+      const ad = String(now.getDate()).padStart(2, "0");
+      document.getElementById("alternative_date").min = `${ay}-${am}-${ad}`;
+    })();
+
+    // ── Option item toggle highlight ─────────────────────────
+    document.querySelectorAll(".option-item input[type=radio]").forEach((radio) => {
+      radio.addEventListener("change", () => {
+        const group = radio.closest(".option-group");
+        if (!group) return;
+        group.querySelectorAll(".option-item").forEach((item) => item.classList.remove("selected"));
+        radio.closest(".option-item").classList.add("selected");
+      });
+    });
+    document.querySelectorAll(".option-item input[type=checkbox]").forEach((cb) => {
+      cb.addEventListener("change", () => {
+        cb.closest(".option-item").classList.toggle("selected", cb.checked);
+      });
+    });
+
+    // ── Conditional: work permit requirements ────────────────
+    document.querySelectorAll('input[name="work_permit"]').forEach((radio) => {
+      radio.addEventListener("change", () => {
+        const val = radio.value;
+        const show = val.startsWith("Yes");
+        const el = document.getElementById("field_work_permit_requirements");
+        el.classList.toggle("visible", show);
+      });
+    });
+
+    // ── Conditional: issue description ──────────────────────
+    document.querySelectorAll('input[name="has_issues"]').forEach((radio) => {
+      radio.addEventListener("change", () => {
+        const el = document.getElementById("field_issue_description");
+        el.classList.toggle("visible", radio.value === "yes");
+      });
+    });
+
+    // ── Validation helpers ───────────────────────────────────
+    function showError(fieldId, errId, msg) {
+      const field = document.getElementById(fieldId);
+      const err = document.getElementById(errId);
+      if (field) field.classList.add("has-error");
+      if (err) { err.textContent = msg || err.textContent; err.style.display = "block"; }
+    }
+    function clearError(fieldId, errId) {
+      const field = document.getElementById(fieldId);
+      const err = document.getElementById(errId);
+      if (field) field.classList.remove("has-error");
+      if (err) err.style.display = "none";
+    }
+    function clearAllErrors() {
+      document.querySelectorAll(".field.has-error").forEach((f) => f.classList.remove("has-error"));
+      document.querySelectorAll(".field-error").forEach((e) => (e.style.display = "none"));
+    }
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    function validateForm() {
+      clearAllErrors();
+      let valid = true;
+
+      // Section A
+      if (!document.getElementById("last_name").value.trim()) {
+        showError("field_last_name", "err_last_name"); valid = false;
+      }
+      if (!document.getElementById("first_name").value.trim()) {
+        showError("field_first_name", "err_first_name"); valid = false;
+      }
+      const emailVal = document.getElementById("email").value.trim();
+      if (!emailVal || !validateEmail(emailVal)) {
+        showError("field_email", "err_email"); valid = false;
+      }
+      if (!document.getElementById("contact_number").value.trim()) {
+        showError("field_contact_number", "err_contact_number"); valid = false;
+      }
+      if (!document.getElementById("site_address").value.trim()) {
+        showError("field_site_address", "err_site_address"); valid = false;
+      }
+
+      // Section B
+      const prefDate = document.getElementById("preferred_date").value;
+      if (!prefDate) {
+        showError("field_preferred_date", "err_preferred_date", "Please select a preferred date."); valid = false;
+      } else {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const diff = Math.floor((new Date(prefDate) - today) / 86400000);
+        if (diff < 10) {
+          showError("field_preferred_date", "err_preferred_date"); valid = false;
+        }
+      }
+      if (!document.querySelector('input[name="preferred_time_slot"]:checked')) {
+        showError("field_preferred_time_slot", "err_preferred_time_slot"); valid = false;
+      }
+
+      // Section C
+      if (!document.querySelector('input[name="panel_location"]:checked')) {
+        showError("field_panel_location", "err_panel_location"); valid = false;
+      }
+      const checkedEquipment = document.querySelectorAll('input[name="access_equipment"]:checked');
+      if (checkedEquipment.length === 0) {
+        showError("field_access_equipment", "err_access_equipment"); valid = false;
+      }
+      if (!document.querySelector('input[name="work_permit"]:checked')) {
+        showError("field_work_permit", "err_work_permit"); valid = false;
+      }
+
+      // Section D
+      if (!document.querySelector('input[name="has_issues"]:checked')) {
+        showError("field_has_issues", "err_has_issues"); valid = false;
+      }
+
+      return valid;
+    }
+
+    // ── Form submission ──────────────────────────────────────
+    document.getElementById("pmsForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const toast = document.getElementById("formToast");
+      toast.className = "toast";
+      toast.textContent = "";
+
+      if (!validateForm()) {
+        toast.className = "toast error";
+        toast.textContent = "Please fill in all required fields before submitting.";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Submitting…';
+
+      // Collect access_equipment values
+      const equipmentChecked = Array.from(
+        document.querySelectorAll('input[name="access_equipment"]:checked')
+      ).map((cb) => {
+        if (cb.value === "Others") {
+          const otherText = document.getElementById("equipment_others_text").value.trim();
+          return otherText ? `Others: ${otherText}` : "Others";
+        }
+        return cb.value;
+      });
+
+      const payload = {
+        lead_id: document.getElementById("lead_id").value,
+        token: document.getElementById("token").value,
+        // Section A
+        last_name: document.getElementById("last_name").value.trim(),
+        first_name: document.getElementById("first_name").value.trim(),
+        email: document.getElementById("email").value.trim(),
+        contact_number: document.getElementById("contact_number").value.trim(),
+        site_address: document.getElementById("site_address").value.trim(),
+        // Section B
+        preferred_date: document.getElementById("preferred_date").value,
+        preferred_time_slot: document.querySelector('input[name="preferred_time_slot"]:checked')?.value || "",
+        alternative_date: document.getElementById("alternative_date").value || "",
+        // Section C
+        panel_location: document.querySelector('input[name="panel_location"]:checked')?.value || "",
+        access_equipment: equipmentChecked,
+        work_permit: document.querySelector('input[name="work_permit"]:checked')?.value || "",
+        work_permit_requirements: document.getElementById("work_permit_requirements").value.trim(),
+        site_contact_name: document.getElementById("site_contact_name").value.trim(),
+        site_contact_number: document.getElementById("site_contact_number").value.trim(),
+        access_instructions: document.getElementById("access_instructions").value.trim(),
+        // Section D
+        has_issues: document.querySelector('input[name="has_issues"]:checked')?.value || "",
+        issue_description: document.getElementById("issue_description").value.trim(),
+        other_requests: document.getElementById("other_requests").value.trim(),
+      };
+
+      try {
+        const response = await fetch("/pms/api/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Submission failed. Please try again.");
+        }
+
+        // Redirect to success page
+        window.location.href = "/pms/success.html";
+      } catch (err) {
+        toast.className = "toast error";
+        toast.textContent = err.message || "An unexpected error occurred. Please try again.";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        btn.disabled = false;
+        btn.textContent = "Submit PMS Request";
+      }
+    });
+  </script>
+</body>
+</html>

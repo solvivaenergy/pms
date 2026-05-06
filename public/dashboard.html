@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solviva PMS — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary: #1f522b;
+      --lime: #d2ff1e;
+      --accent: #006ac6;
+      --bg: #F2F4F7;
+      --white: #fff;
+      --border: #e3e8ef;
+      --text: #1a1f2b;
+      --muted: #6b7280;
+      --red: #dc2626;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Login screen */
+    #loginScreen {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 2rem;
+    }
+    .login-card {
+      background: var(--white); border-radius: 12px;
+      padding: 2.5rem 2rem; max-width: 380px; width: 100%;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+    .login-card img { height: 40px; margin-bottom: 1.5rem; display: block; }
+    .login-card h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 0.4rem; }
+    .login-card p { font-size: 0.85rem; color: var(--muted); margin-bottom: 1.5rem; }
+
+    /* Topbar */
+    #dashboard { display: none; }
+    .topbar {
+      background: var(--primary); color: var(--white);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.85rem 2rem;
+    }
+    .topbar img { height: 32px; }
+    .topbar h1 { font-size: 1rem; font-weight: 700; }
+    .topbar-right { display: flex; align-items: center; gap: 1rem; }
+    .btn-logout {
+      background: transparent; border: 1px solid rgba(255,255,255,0.4);
+      color: var(--white); font-family: inherit; font-size: 0.82rem;
+      padding: 0.35rem 0.85rem; border-radius: 6px; cursor: pointer;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.1); }
+
+    /* Main layout */
+    .main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    /* Cards */
+    .panel {
+      background: var(--white); border-radius: 10px; border: 1px solid var(--border);
+      padding: 1.5rem; margin-bottom: 1.5rem;
+    }
+    .panel h2 { font-size: 1rem; font-weight: 700; color: var(--primary); margin-bottom: 1.25rem; border-bottom: 2px solid var(--lime); padding-bottom: 0.5rem; }
+
+    /* Form elements */
+    .form-row { display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap; }
+    label { font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 0.3rem; }
+    input[type="text"], input[type="password"] {
+      padding: 0.55rem 0.75rem; border: 1.5px solid var(--border); border-radius: 6px;
+      font-family: inherit; font-size: 0.88rem; outline: none; width: 100%;
+    }
+    input:focus { border-color: var(--primary); }
+    .field { flex: 1; min-width: 200px; }
+    .btn {
+      padding: 0.58rem 1.2rem; border: none; border-radius: 6px;
+      font-family: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+    }
+    .btn-primary { background: var(--primary); color: var(--white); }
+    .btn-primary:hover { background: #174020; }
+    .btn-secondary { background: var(--accent); color: var(--white); }
+    .btn-secondary:hover { background: #0055a4; }
+    .btn:disabled { background: #9ca3af; cursor: not-allowed; }
+
+    /* Search results */
+    .search-results {
+      margin-top: 0.75rem; border: 1px solid var(--border); border-radius: 6px;
+      overflow: hidden; display: none;
+    }
+    .search-result-item {
+      padding: 0.65rem 0.85rem; cursor: pointer; font-size: 0.87rem;
+      border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+    }
+    .search-result-item:last-child { border-bottom: none; }
+    .search-result-item:hover { background: #f0f7f1; }
+    .result-name { font-weight: 600; }
+    .result-email { color: var(--muted); font-size: 0.8rem; }
+
+    /* Generated link */
+    .link-box {
+      margin-top: 1rem; background: #f0f7f1; border: 1px solid #bbf7d0;
+      border-radius: 8px; padding: 1rem 1.25rem; display: none;
+    }
+    .link-box .partner-label { font-size: 0.82rem; color: var(--primary); font-weight: 700; margin-bottom: 0.4rem; }
+    .link-text-row { display: flex; gap: 0.5rem; align-items: center; }
+    .link-text {
+      font-size: 0.82rem; color: var(--text); background: var(--white);
+      border: 1px solid var(--border); border-radius: 4px; padding: 0.4rem 0.65rem;
+      flex: 1; word-break: break-all; font-family: monospace;
+    }
+    .btn-copy {
+      background: var(--primary); color: var(--white); border: none;
+      border-radius: 4px; padding: 0.45rem 0.8rem; font-size: 0.8rem;
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn-copy:hover { background: #174020; }
+    .copy-confirmation { font-size: 0.78rem; color: #166534; margin-top: 0.35rem; display: none; }
+
+    /* Toast */
+    .toast {
+      padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.85rem; margin-bottom: 1rem; display: none;
+    }
+    .toast.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: block; }
+    .toast.success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; display: block; }
+    .toast.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; display: block; }
+
+    /* Table */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th { background: #f9fafb; padding: 0.65rem 0.85rem; text-align: left; font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid var(--border); white-space: nowrap; }
+    td { padding: 0.65rem 0.85rem; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tr:hover td { background: #f9fafb; }
+    .badge {
+      display: inline-block; padding: 0.2rem 0.55rem; border-radius: 4px; font-size: 0.74rem; font-weight: 600;
+    }
+    .badge-issues { background: #fef2f2; color: #991b1b; }
+    .badge-ok { background: #f0fdf4; color: #166534; }
+    .badge-stage { background: #eff6ff; color: #1e40af; }
+    .table-empty { text-align: center; padding: 2rem; color: var(--muted); font-size: 0.88rem; }
+
+    /* Loading spinner */
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
+      border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle;
+    }
+    .spinner-dark {
+      border-color: rgba(31,82,43,0.2); border-top-color: var(--primary);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      .topbar { padding: 0.75rem 1rem; }
+      .main { padding: 1.25rem 0.75rem; }
+      .form-row { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── LOGIN SCREEN ── -->
+<div id="loginScreen">
+  <div class="login-card">
+    <img src="/pms/solvivalogo.png" alt="Solviva Energy" onerror="this.style.display='none'" />
+    <h2>PMS Dashboard</h2>
+    <p>Sign in to generate questionnaire links and view submissions.</p>
+    <div id="loginToast" class="toast"></div>
+    <div class="field" style="margin-bottom:1rem;">
+      <label for="loginPassword">Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter dashboard password" autocomplete="current-password" />
+    </div>
+    <button class="btn btn-primary" style="width:100%;" id="loginBtn" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- ── DASHBOARD ── -->
+<div id="dashboard">
+  <nav class="topbar">
+    <div style="display:flex;align-items:center;gap:0.75rem;">
+      <img src="/pms/solvivalogo2.png" alt="Solviva Energy" onerror="this.style.display='none'" />
+      <h1>PMS Questionnaire Dashboard</h1>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+    </div>
+  </nav>
+
+  <div class="main">
+
+    <!-- Generate Link Panel -->
+    <div class="panel">
+      <h2>Generate Client Questionnaire Link</h2>
+      <div id="genToast" class="toast"></div>
+
+      <div class="form-row">
+        <div class="field">
+          <label for="leadSearchQuery">Search by Customer / Lead Name</label>
+          <input type="text" id="leadSearchQuery" placeholder="e.g. dela Cruz" oninput="onLeadSearchInput()" autocomplete="off" />
+        </div>
+        <button class="btn btn-primary" onclick="searchLeads()" id="leadSearchBtn">Search</button>
+      </div>
+      <div class="search-results" id="leadSearchResults"></div>
+      <div style="margin-top:1rem;padding:0.75rem;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;font-size:0.82rem;color:#1e40af;display:none;" id="selectedLeadInfo"></div>
+
+      <div style="margin-top:1rem; display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
+        <div class="field">
+          <label for="leadIdInput">Or enter Odoo Lead ID directly</label>
+          <input type="text" id="leadIdInput" placeholder="e.g. 84" />
+        </div>
+        <button class="btn btn-secondary" onclick="generateLink()" id="generateBtn">Generate Link</button>
+      </div>
+
+      <div class="link-box" id="linkBox">
+        <div class="partner-label" id="linkPartnerLabel"></div>
+        <div class="link-text-row">
+          <div class="link-text" id="linkText"></div>
+          <button class="btn-copy" onclick="copyLink()">Copy</button>
+        </div>
+        <div class="copy-confirmation" id="copyConfirm">✓ Link copied to clipboard</div>
+      </div>
+    </div>
+
+    <!-- Submissions Table Panel -->
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.5rem;border-bottom:2px solid var(--lime);">
+        <h2 style="margin:0;border:none;padding:0;">Recent PMS Submissions</h2>
+        <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadRequests()" id="refreshBtn">Refresh</button>
+      </div>
+      <div id="requestsToast" class="toast"></div>
+      <div class="table-wrap">
+        <table id="requestsTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Contact</th>
+              <th>Site Address</th>
+              <th>Preferred Date</th>
+              <th>Time Slot</th>
+              <th>Panel Location</th>
+              <th>Issues</th>
+              <th>Lead</th>
+              <th>Stage</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody id="requestsBody">
+            <tr><td colspan="12" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let authToken = localStorage.getItem("pms_auth_token") || "";
+
+  // ── Login ─────────────────────────────────────────────────
+  async function doLogin() {
+    const pw = document.getElementById("loginPassword").value;
+    const toast = document.getElementById("loginToast");
+    toast.className = "toast";
+    if (!pw) { toast.className = "toast error"; toast.textContent = "Please enter your password."; return; }
+    const btn = document.getElementById("loginBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Signing in…';
+    try {
+      const res = await fetch("/pms/dashboard/login", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: pw }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Invalid password.");
+      authToken = data.token;
+      localStorage.setItem("pms_auth_token", authToken);
+      showDashboard();
+    } catch (err) {
+      toast.className = "toast error";
+      toast.textContent = err.message;
+      btn.disabled = false; btn.textContent = "Sign In";
+    }
+  }
+
+  function doLogout() {
+    authToken = "";
+    localStorage.removeItem("pms_auth_token");
+    document.getElementById("dashboard").style.display = "none";
+    document.getElementById("loginScreen").style.display = "flex";
+    document.getElementById("loginPassword").value = "";
+  }
+
+  function showDashboard() {
+    document.getElementById("loginScreen").style.display = "none";
+    document.getElementById("dashboard").style.display = "block";
+    loadRequests();
+  }
+
+  // Auto-login if token exists
+  if (authToken) showDashboard();
+
+  document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doLogin();
+  });
+
+  // ── Search leads ─────────────────────────────────────────
+  let leadSearchTimeout;
+  let selectedLeadId = null;
+
+  function onLeadSearchInput() {
+    clearTimeout(leadSearchTimeout);
+    leadSearchTimeout = setTimeout(searchLeads, 500);
+  }
+
+  async function searchLeads() {
+    const q = document.getElementById("leadSearchQuery").value.trim();
+    const results = document.getElementById("leadSearchResults");
+    if (q.length < 2) { results.style.display = "none"; return; }
+
+    results.style.display = "block";
+    results.innerHTML = '<div style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--muted);"><span class="spinner spinner-dark"></span> Searching…</div>';
+
+    try {
+      const res = await fetch(`/pms/dashboard/search-leads?q=${encodeURIComponent(q)}`, {
+        headers: { "Authorization": `Bearer ${authToken}` }
+      });
+      if (res.status === 401) { doLogout(); return; }
+      const data = await res.json();
+      if (!data.leads || data.leads.length === 0) {
+        results.innerHTML = '<div style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--muted);">No leads found.</div>';
+        return;
+      }
+      results.innerHTML = data.leads.map(l => {
+        const installDate = l.x_studio_installation_date || l.date_closed;
+        const dateLabel = installDate ? ` · Install: ${installDate.split(" ")[0]}` : "";
+        return `<div class="search-result-item" onclick="selectLead(${l.id}, ${JSON.stringify(l.partner_name || l.partner_id?.[1] || "").replace(/"/g, '&quot;')})">
+          <div>
+            <div class="result-name">${escHtml(l.partner_name || l.name || "")}</div>
+            <div class="result-email">${escHtml(l.name || "")} · ${escHtml(l.stage_id ? l.stage_id[1] : "")}${escHtml(dateLabel)}</div>
+          </div>
+          <span style="font-size:0.78rem;color:var(--muted);">Lead #${l.id}</span>
+        </div>`;
+      }).join("");
+    } catch (err) {
+      results.innerHTML = `<div style="padding:0.75rem 1rem;font-size:0.85rem;color:var(--red);">Error: ${escHtml(err.message)}</div>`;
+    }
+  }
+
+  function selectLead(leadId, partnerName) {
+    selectedLeadId = leadId;
+    document.getElementById("leadIdInput").value = leadId;
+    document.getElementById("leadSearchResults").style.display = "none";
+    const info = document.getElementById("selectedLeadInfo");
+    info.style.display = "block";
+    info.innerHTML = `<strong>Lead #${leadId}</strong> — ${escHtml(partnerName)}<br><span style="font-size:0.79rem;">Click Generate Link to create the questionnaire URL.</span>`;
+    generateLink();
+  }
+
+  // ── Generate link ────────────────────────────────────────
+  async function generateLink() {
+    const toast = document.getElementById("genToast");
+    toast.className = "toast";
+
+    const leadId = (document.getElementById("leadIdInput").value || "").trim();
+    if (!leadId) { toast.className = "toast error"; toast.textContent = "Please search for and select a lead, or enter a Lead ID."; return; }
+
+    const btn = document.getElementById("generateBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating…';
+
+    try {
+      const res = await fetch("/pms/dashboard/generate-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
+        body: JSON.stringify({ lead_id: leadId }),
+      });
+      if (res.status === 401) { doLogout(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to generate link.");
+
+      document.getElementById("linkPartnerLabel").textContent =
+        `Link for: ${data.partner_name} (${data.partner_email || "no email"}) — Lead #${data.lead_id}`;
+      document.getElementById("linkText").textContent = data.link;
+      document.getElementById("linkBox").style.display = "block";
+      document.getElementById("copyConfirm").style.display = "none";
+    } catch (err) {
+      toast.className = "toast error";
+      toast.textContent = err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = "Generate Link";
+    }
+  }
+
+  function copyLink() {
+    const link = document.getElementById("linkText").textContent;
+    navigator.clipboard.writeText(link).then(() => {
+      document.getElementById("copyConfirm").style.display = "block";
+      setTimeout(() => { document.getElementById("copyConfirm").style.display = "none"; }, 2500);
+    });
+  }
+
+  // ── Load requests ────────────────────────────────────────
+  async function loadRequests() {
+    const tbody = document.getElementById("requestsBody");
+    const toast = document.getElementById("requestsToast");
+    toast.className = "toast";
+    const btn = document.getElementById("refreshBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    tbody.innerHTML = '<tr><td colspan="12" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>';
+
+    try {
+      const res = await fetch("/pms/dashboard/requests", {
+        headers: { "Authorization": `Bearer ${authToken}` }
+      });
+      if (res.status === 401) { doLogout(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load.");
+
+      const reqs = data.requests || [];
+      if (reqs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" class="table-empty">No PMS submissions yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = reqs.map(r => `
+        <tr>
+          <td style="font-size:0.78rem;color:var(--muted);">${r.id}</td>
+          <td><strong>${escHtml((r.x_pms_last_name || "") + ", " + (r.x_pms_first_name || ""))}</strong></td>
+          <td style="font-size:0.82rem;">${escHtml(r.x_pms_email || "—")}</td>
+          <td style="font-size:0.82rem;">${escHtml(r.x_pms_contact_number || "—")}</td>
+          <td style="font-size:0.8rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.x_pms_site_address || "")}">${escHtml(r.x_pms_site_address || "—")}</td>
+          <td style="white-space:nowrap;">${escHtml(r.schedule_date ? r.schedule_date.split(" ")[0] : "—")}</td>
+          <td style="text-transform:capitalize;">${escHtml(r.x_pms_preferred_time_slot || "—")}</td>
+          <td style="font-size:0.8rem;">${escHtml(r.x_pms_panel_location || "—")}</td>
+          <td>${r.x_pms_has_issues ? '<span class="badge badge-issues">Yes</span>' : '<span class="badge badge-ok">No</span>'}</td>
+          <td style="font-size:0.78rem;">${r.x_pms_lead_id ? '<span class="badge badge-stage">#' + escHtml(String(Array.isArray(r.x_pms_lead_id) ? r.x_pms_lead_id[0] : r.x_pms_lead_id)) + '</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${r.stage_id ? '<span class="badge badge-stage">' + escHtml(r.stage_id[1]) + '</span>' : '—'}</td>
+          <td style="white-space:nowrap;font-size:0.8rem;">${escHtml(r.request_date || "—")}</td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      toast.className = "toast error";
+      toast.textContent = err.message;
+      tbody.innerHTML = '<tr><td colspan="12" class="table-empty">Failed to load requests.</td></tr>';
+    } finally {
+      btn.disabled = false; btn.textContent = "Refresh";
+    }
+  }
+
+  function escHtml(str) {
+    return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+</script>
+</body>
+</html>

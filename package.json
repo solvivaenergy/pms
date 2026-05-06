@@ -1,0 +1,21 @@
+{
+  "name": "pms-questionnaire",
+  "version": "1.0.0",
+  "description": "Solviva Energy — PMS Annual Questionnaire Web App",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [],
+  "author": "Solviva Energy",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.14.0",
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
