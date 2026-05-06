@@ -636,44 +636,37 @@ app.get(
 
 // List recently submitted PMS requests
 app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
+  const domain = [["maintenance_type", "=", "preventive"]];
+  const customFields = [
+    "x_pms_last_name", "x_pms_first_name", "x_pms_email",
+    "x_pms_contact_number", "x_pms_site_address",
+    "x_pms_preferred_time_slot", "x_pms_panel_location",
+    "x_pms_has_issues", "x_pms_lead_id",
+  ];
+  const standardFields = ["id", "name", "request_date", "schedule_date", "stage_id"];
+
+  // Try with custom fields first; fall back to standard-only if fields don't exist yet
+  let requests;
   try {
-    const requests = await odooExecute(
-      "maintenance.request",
-      "search_read",
-      [
-        [
-          ["maintenance_type", "=", "preventive"],
-          ["x_pms_submission_token", "!=", false],
-        ],
-      ],
-      {
-        fields: [
-          "id",
-          "name",
-          "request_date",
-          "schedule_date",
-          "x_pms_last_name",
-          "x_pms_first_name",
-          "x_pms_email",
-          "x_pms_contact_number",
-          "x_pms_site_address",
-          "x_pms_preferred_time_slot",
-          "x_pms_panel_location",
-          "x_pms_has_issues",
-          "x_pms_lead_id",
-          "stage_id",
-        ],
+    requests = await odooExecute("maintenance.request", "search_read", [domain], {
+      fields: [...standardFields, ...customFields],
+      order: "create_date desc",
+      limit: 100,
+    });
+  } catch (err) {
+    console.warn("Custom fields not found, falling back to standard fields:", err.message);
+    try {
+      requests = await odooExecute("maintenance.request", "search_read", [domain], {
+        fields: standardFields,
         order: "create_date desc",
         limit: 100,
-      },
-    );
-    return res.json({ requests });
-  } catch (err) {
-    console.error("List requests error:", err.message);
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch maintenance requests." });
+      });
+    } catch (err2) {
+      console.error("List requests error:", err2.message);
+      return res.status(500).json({ error: "Failed to fetch maintenance requests." });
+    }
   }
+  return res.json({ requests });
 });
 
 // ─── Error page helper ────────────────────────────────────────────────────────
