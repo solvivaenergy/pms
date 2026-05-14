@@ -637,7 +637,10 @@ app.get(
 
 // List recently submitted PMS requests
 app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
-  const domain = [["maintenance_type", "=", "preventive"]];
+  const domain = [
+    ["maintenance_type", "=", "preventive"],
+    ["x_pms_submission_token", "!=", false],
+  ];
   const customFields = [
     "x_pms_last_name",
     "x_pms_first_name",
@@ -657,10 +660,8 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
     "stage_id",
   ];
 
-  // Try with custom fields first; fall back to standard-only if fields don't exist yet
-  let requests;
   try {
-    requests = await odooExecute(
+    const requests = await odooExecute(
       "maintenance.request",
       "search_read",
       [domain],
@@ -670,30 +671,11 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
         limit: 100,
       },
     );
+    return res.json({ requests });
   } catch (err) {
-    console.warn(
-      "Custom fields not found, falling back to standard fields:",
-      err.message,
-    );
-    try {
-      requests = await odooExecute(
-        "maintenance.request",
-        "search_read",
-        [domain],
-        {
-          fields: standardFields,
-          order: "create_date desc",
-          limit: 100,
-        },
-      );
-    } catch (err2) {
-      console.error("List requests error:", err2.message);
-      return res
-        .status(500)
-        .json({ error: "Failed to fetch maintenance requests." });
-    }
+    console.error("List requests error:", err.message);
+    return res.status(500).json({ error: "Failed to fetch maintenance requests." });
   }
-  return res.json({ requests });
 });
 
 // ─── Error page helper ────────────────────────────────────────────────────────
