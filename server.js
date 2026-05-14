@@ -541,6 +541,16 @@ app.post(
       const protocol = req.protocol;
       const link = `${protocol}://${baseUrl}/pms?lead_id=${id}&token=${token}`;
 
+      // Write link back to crm.lead so it's visible on the CRM record
+      try {
+        await odooExecute("crm.lead", "write", [
+          [id],
+          { x_pms_questionnaire_link: link },
+        ]);
+      } catch (writeErr) {
+        console.warn("Could not write PMS link to CRM lead:", writeErr.message);
+      }
+
       return res.json({
         lead_id: id,
         lead_name: lead.name,
@@ -674,7 +684,9 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
     return res.json({ requests });
   } catch (err) {
     console.error("List requests error:", err.message);
-    return res.status(500).json({ error: "Failed to fetch maintenance requests." });
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch maintenance requests." });
   }
 });
 

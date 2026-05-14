@@ -409,14 +409,53 @@ async function main() {
     console.log(`  Created new view  id=${viewId}`);
   }
 
+  // ── Step 7: Add x_pms_questionnaire_link field to crm.lead ──────────────
+  console.log("\n═══ Step 7: Adding PMS link field to crm.lead ═══");
+  const [crmModel] = await execute(
+    "ir.model",
+    "search_read",
+    [[["model", "=", "crm.lead"]]],
+    { fields: ["id", "name"], limit: 1 },
+  );
+  if (!crmModel) {
+    console.warn("  crm.lead model not found — skipping");
+  } else {
+    const crmFields = await execute(
+      "ir.model.fields",
+      "search_read",
+      [
+        [
+          ["model_id", "=", crmModel.id],
+          ["name", "=", "x_pms_questionnaire_link"],
+        ],
+      ],
+      { fields: ["id", "name"], limit: 1 },
+    );
+    if (crmFields.length) {
+      console.log(`  SKIP    x_pms_questionnaire_link (already exists)`);
+    } else {
+      const fieldId = await execute("ir.model.fields", "create", [
+        {
+          name: "x_pms_questionnaire_link",
+          field_description: "PMS Questionnaire Link",
+          model_id: crmModel.id,
+          ttype: "char",
+          store: true,
+        },
+      ]);
+      console.log(
+        `  CREATE  x_pms_questionnaire_link on crm.lead  id=${fieldId}`,
+      );
+    }
+  }
+
   console.log(`
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ✓ Setup complete!
 
 To verify:
-  → Open Odoo → Maintenance app
-  → Open any maintenance request
-  → Look for the "PMS Questionnaire" tab
+  → Open Odoo → Maintenance app → any request → "PMS Questionnaire" tab
+  → Open Odoo → CRM → any lead → look for "PMS Questionnaire Link" field
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 }
 
