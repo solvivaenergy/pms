@@ -448,6 +448,7 @@ Other Questions or Requests: ${other_requests || "None"}
       x_pms_issue_description: issue_description || "",
       x_pms_other_requests: other_requests || "",
       x_pms_lead_id: parseInt(lead_id, 10),
+      x_pms_crm_lead_id: parseInt(lead_id, 10), // Many2one → crm.lead
       x_pms_submission_token: token,
       // Partner resolved server-side from the lead
       ...(resolvedPartnerId ? { x_pms_partner_id: resolvedPartnerId } : {}),
@@ -638,32 +639,58 @@ app.get(
 app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
   const domain = [["maintenance_type", "=", "preventive"]];
   const customFields = [
-    "x_pms_last_name", "x_pms_first_name", "x_pms_email",
-    "x_pms_contact_number", "x_pms_site_address",
-    "x_pms_preferred_time_slot", "x_pms_panel_location",
-    "x_pms_has_issues", "x_pms_lead_id",
+    "x_pms_last_name",
+    "x_pms_first_name",
+    "x_pms_email",
+    "x_pms_contact_number",
+    "x_pms_site_address",
+    "x_pms_preferred_time_slot",
+    "x_pms_panel_location",
+    "x_pms_has_issues",
+    "x_pms_lead_id",
   ];
-  const standardFields = ["id", "name", "request_date", "schedule_date", "stage_id"];
+  const standardFields = [
+    "id",
+    "name",
+    "request_date",
+    "schedule_date",
+    "stage_id",
+  ];
 
   // Try with custom fields first; fall back to standard-only if fields don't exist yet
   let requests;
   try {
-    requests = await odooExecute("maintenance.request", "search_read", [domain], {
-      fields: [...standardFields, ...customFields],
-      order: "create_date desc",
-      limit: 100,
-    });
-  } catch (err) {
-    console.warn("Custom fields not found, falling back to standard fields:", err.message);
-    try {
-      requests = await odooExecute("maintenance.request", "search_read", [domain], {
-        fields: standardFields,
+    requests = await odooExecute(
+      "maintenance.request",
+      "search_read",
+      [domain],
+      {
+        fields: [...standardFields, ...customFields],
         order: "create_date desc",
         limit: 100,
-      });
+      },
+    );
+  } catch (err) {
+    console.warn(
+      "Custom fields not found, falling back to standard fields:",
+      err.message,
+    );
+    try {
+      requests = await odooExecute(
+        "maintenance.request",
+        "search_read",
+        [domain],
+        {
+          fields: standardFields,
+          order: "create_date desc",
+          limit: 100,
+        },
+      );
     } catch (err2) {
       console.error("List requests error:", err2.message);
-      return res.status(500).json({ error: "Failed to fetch maintenance requests." });
+      return res
+        .status(500)
+        .json({ error: "Failed to fetch maintenance requests." });
     }
   }
   return res.json({ requests });
