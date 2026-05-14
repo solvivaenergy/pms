@@ -167,7 +167,6 @@ app.get("/pms", async (req, res) => {
           "city",
           "state_id",
           "country_id",
-          "x_studio_installation_date",
         ],
         limit: 1,
       },
@@ -630,7 +629,6 @@ app.get(
             "email_from",
             "phone",
             "stage_id",
-            "x_studio_installation_date",
             "date_closed",
           ],
           limit: 20,
@@ -646,24 +644,41 @@ app.get(
 );
 
 // List CRM leads that have a PMS questionnaire link generated
-app.get("/pms/dashboard/linked-leads", requireDashboardAuth, async (req, res) => {
-  try {
-    const leads = await odooExecute(
-      "crm.lead",
-      "search_read",
-      [[["x_pms_questionnaire_link", "!=", false], ["x_pms_questionnaire_link", "!=", ""]]],
-      {
-        fields: ["id", "name", "partner_name", "partner_id", "email_from", "stage_id", "x_pms_questionnaire_link"],
-        order: "id desc",
-        limit: 200,
-      },
-    );
-    return res.json({ leads });
-  } catch (err) {
-    console.error("Linked leads error:", err.message);
-    return res.status(500).json({ error: "Failed to fetch leads." });
-  }
-});
+app.get(
+  "/pms/dashboard/linked-leads",
+  requireDashboardAuth,
+  async (req, res) => {
+    try {
+      const leads = await odooExecute(
+        "crm.lead",
+        "search_read",
+        [
+          [
+            ["x_pms_questionnaire_link", "!=", false],
+            ["x_pms_questionnaire_link", "!=", ""],
+          ],
+        ],
+        {
+          fields: [
+            "id",
+            "name",
+            "partner_name",
+            "partner_id",
+            "email_from",
+            "stage_id",
+            "x_pms_questionnaire_link",
+          ],
+          order: "id desc",
+          limit: 200,
+        },
+      );
+      return res.json({ leads });
+    } catch (err) {
+      console.error("Linked leads error:", err.message);
+      return res.status(500).json({ error: "Failed to fetch leads." });
+    }
+  },
+);
 
 // List recently submitted PMS requests
 app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
