@@ -478,6 +478,19 @@ Other Questions or Requests: ${other_requests || "None"}
     console.log(
       `Maintenance request created: ID ${requestId} for lead ${lead_id}`,
     );
+
+    // Link the new maintenance request to the CRM lead via Many2many
+    try {
+      await odooExecute("crm.lead", "write", [
+        [parseInt(lead_id, 10)],
+        { x_pms_request_ids: [[4, requestId]] },
+      ]);
+    } catch (linkErr) {
+      console.warn(
+        "Could not link maintenance request to CRM lead:",
+        linkErr.message,
+      );
+    }
   } catch (err) {
     console.error("Odoo create error:", err.message);
     // Attempt fallback — create with only standard fields if custom fields fail
