@@ -225,6 +225,35 @@
       </div>
     </div>
 
+    <!-- Leads with PMS Link Panel -->
+    <div class="panel">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.5rem;border-bottom:2px solid var(--lime);">
+        <div>
+          <h2 style="margin:0;border:none;padding:0;">Leads with PMS Link Generated</h2>
+          <p style="margin:0.25rem 0 0;font-size:0.82rem;color:var(--muted);">CRM leads where a questionnaire link has been sent</p>
+        </div>
+        <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadLinkedLeads()" id="linkedLeadsRefreshBtn">Refresh</button>
+      </div>
+      <div id="linkedLeadsToast" class="toast"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Lead #</th>
+              <th>Lead Name</th>
+              <th>Client</th>
+              <th>Email</th>
+              <th>Stage</th>
+              <th>Questionnaire Link</th>
+            </tr>
+          </thead>
+          <tbody id="linkedLeadsBody">
+            <tr><td colspan="6" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- Submissions Table Panel -->
     <div class="panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.5rem;border-bottom:2px solid var(--lime);">
@@ -299,6 +328,7 @@
   function showDashboard() {
     document.getElementById("loginScreen").style.display = "none";
     document.getElementById("dashboard").style.display = "block";
+    loadLinkedLeads();
     loadRequests();
   }
 
@@ -402,6 +432,49 @@
       document.getElementById("copyConfirm").style.display = "block";
       setTimeout(() => { document.getElementById("copyConfirm").style.display = "none"; }, 2500);
     });
+  }
+
+  // ── Load linked leads ──────────────────────────────────
+  async function loadLinkedLeads() {
+    const tbody = document.getElementById("linkedLeadsBody");
+    const toast = document.getElementById("linkedLeadsToast");
+    toast.className = "toast";
+    const btn = document.getElementById("linkedLeadsRefreshBtn");
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>';
+
+    try {
+      const res = await fetch("/pms/dashboard/linked-leads", {
+        headers: { "Authorization": `Bearer ${authToken}` }
+      });
+      if (res.status === 401) { doLogout(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to load.");
+
+      const leads = data.leads || [];
+      if (leads.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No leads with PMS links yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = leads.map(l => `
+        <tr>
+          <td style="font-size:0.78rem;color:var(--muted);">#${l.id}</td>
+          <td style="font-size:0.82rem;">${escHtml(l.name || "—")}</td>
+          <td><strong>${escHtml(l.partner_name || (Array.isArray(l.partner_id) ? l.partner_id[1] : "") || "—")}</strong></td>
+          <td style="font-size:0.82rem;">${escHtml(l.email_from || "—")}</td>
+          <td>${l.stage_id ? '<span class="badge badge-stage">' + escHtml(l.stage_id[1]) + '</span>' : '—'}</td>
+          <td style="font-size:0.78rem;">
+            <a href="${escHtml(l.x_pms_questionnaire_link)}" target="_blank" style="color:var(--blue);word-break:break-all;">${escHtml(l.x_pms_questionnaire_link)}</a>
+          </td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      toast.className = "toast error";
+      toast.textContent = err.message;
+      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load leads.</td></tr>';
+    } finally {
+      btn.disabled = false; btn.textContent = "Refresh";
+    }
   }
 
   // ── Load requests ────────────────────────────────────────
