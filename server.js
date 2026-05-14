@@ -209,8 +209,25 @@ app.get("/pms", async (req, res) => {
     const partnerId = lead.partner_id?.[0] || null;
 
     // Build prefill from lead fields
+    const fullName = lead.partner_name || lead.partner_id?.[1] || "";
+    let prefillFirstName = "";
+    let prefillLastName = "";
+    if (fullName) {
+      if (fullName.includes(",")) {
+        // "Last, First" format
+        const [last, ...rest] = fullName.split(/,\s*/);
+        prefillLastName = last.trim();
+        prefillFirstName = rest.join(" ").trim();
+      } else {
+        const words = fullName.trim().split(/\s+/);
+        prefillLastName = words.length >= 2 ? words[words.length - 1] : "";
+        prefillFirstName = words.length >= 2 ? words.slice(0, -1).join(" ") : fullName;
+      }
+    }
     const prefill = {
-      name: lead.partner_name || lead.partner_id?.[1] || "",
+      name: fullName,
+      first_name: prefillFirstName,
+      last_name: prefillLastName,
       email: lead.email_from || "",
       phone: lead.phone || "",
       address: [

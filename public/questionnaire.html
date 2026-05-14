@@ -574,17 +574,19 @@
       document.getElementById("lead_id").value = window.__LEAD_ID__ || "";
 
       // Prefill Section A from Odoo partner data
-      if (prefill.name) {
-        // Try splitting name into last/first
-        const parts = prefill.name.split(/,\s*| /);
+      if (prefill.first_name !== undefined || prefill.last_name !== undefined) {
+        document.getElementById("first_name").value = prefill.first_name || "";
+        document.getElementById("last_name").value = prefill.last_name || "";
+      } else if (prefill.name) {
+        // Fallback: split full name
         if (prefill.name.includes(",")) {
-          // "Last, First" format
           const [last, ...rest] = prefill.name.split(/,\s*/);
           document.getElementById("last_name").value = last || "";
           document.getElementById("first_name").value = rest.join(" ") || "";
         } else {
-          // "First Last" format — put all in first name
-          document.getElementById("first_name").value = prefill.name;
+          const words = prefill.name.trim().split(/\s+/);
+          document.getElementById("last_name").value = words.length >= 2 ? words[words.length - 1] : "";
+          document.getElementById("first_name").value = words.length >= 2 ? words.slice(0, -1).join(" ") : prefill.name;
         }
       }
       if (prefill.email) document.getElementById("email").value = prefill.email;
@@ -601,8 +603,9 @@
       const dd = String(today.getDate()).padStart(2, "0");
       document.getElementById("preferred_date").min = `${yyyy}-${mm}-${dd}`;
 
-      // Alternative date min = today
+      // Alternative date min = 10 days from today
       const now = new Date();
+      now.setDate(now.getDate() + 10);
       const ay = now.getFullYear();
       const am = String(now.getMonth() + 1).padStart(2, "0");
       const ad = String(now.getDate()).padStart(2, "0");
