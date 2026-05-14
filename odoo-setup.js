@@ -447,6 +447,62 @@ async function main() {
         `  CREATE  x_pms_questionnaire_link on crm.lead  id=${fieldId}`,
       );
     }
+
+    // ── Step 8: Add PMS link field to the CRM lead form view ────────────────
+    console.log("\n═══ Step 8: Adding PMS link to CRM lead form view ═══");
+    const crmFormViews = await execute(
+      "ir.ui.view",
+      "search_read",
+      [
+        [
+          ["model", "=", "crm.lead"],
+          ["type", "=", "form"],
+          ["inherit_id", "=", false],
+        ],
+      ],
+      { fields: ["id", "name", "xml_id"], order: "priority asc", limit: 5 },
+    );
+    if (!crmFormViews.length) {
+      console.warn("  No base CRM lead form view found — skipping");
+    } else {
+      const crmBaseView = crmFormViews[0];
+      console.log(`  Base view: "${crmBaseView.name}"  id=${crmBaseView.id}`);
+
+      const CRM_VIEW_NAME = "crm.lead.form.pms.link";
+      const crmArch = `<data>
+  <xpath expr="//sheet" position="before">
+    <div class="alert alert-info" invisible="not x_pms_questionnaire_link" role="alert" style="margin-bottom:0">
+      <strong>PMS Questionnaire Link:</strong>
+      <field name="x_pms_questionnaire_link" widget="url" nolabel="1" style="margin-left:8px"/>
+    </div>
+  </xpath>
+</data>`;
+
+      const [existingCrmView] = await execute(
+        "ir.ui.view",
+        "search_read",
+        [[["name", "=", CRM_VIEW_NAME]]],
+        { fields: ["id"], limit: 1 },
+      );
+      if (existingCrmView) {
+        await execute("ir.ui.view", "write", [
+          [existingCrmView.id],
+          { arch: crmArch },
+        ]);
+        console.log(`  Updated existing CRM view  id=${existingCrmView.id}`);
+      } else {
+        const crmViewId = await execute("ir.ui.view", "create", [
+          {
+            name: CRM_VIEW_NAME,
+            model: "crm.lead",
+            inherit_id: crmBaseView.id,
+            arch: crmArch,
+            priority: 99,
+          },
+        ]);
+        console.log(`  Created new CRM view  id=${crmViewId}`);
+      }
+    }
   }
 
   console.log(`
@@ -455,7 +511,7 @@ async function main() {
 
 To verify:
   → Open Odoo → Maintenance app → any request → "PMS Questionnaire" tab
-  → Open Odoo → CRM → any lead → look for "PMS Questionnaire Link" field
+  → Open Odoo → CRM → Lead #1121 → blue banner at the top with the link
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
 }
 
