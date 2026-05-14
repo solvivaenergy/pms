@@ -470,11 +470,12 @@ async function main() {
 
       const CRM_VIEW_NAME = "crm.lead.form.pms.link";
       const crmArch = `<data>
-  <xpath expr="//sheet" position="before">
-    <div class="alert alert-info" invisible="not x_pms_questionnaire_link" role="alert" style="margin-bottom:0">
-      <strong>PMS Questionnaire Link:</strong>
-      <field name="x_pms_questionnaire_link" widget="url" nolabel="1" style="margin-left:8px"/>
-    </div>
+  <xpath expr="//notebook" position="inside">
+    <page string="PMS" name="pms_tab">
+      <group string="PMS Questionnaire">
+        <field name="x_pms_questionnaire_link" string="Questionnaire URL" widget="url" readonly="1"/>
+      </group>
+    </page>
   </xpath>
 </data>`;
 
