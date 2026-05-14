@@ -236,8 +236,10 @@ app.get("/pms", async (req, res) => {
         );
         if (partners?.length > 0) {
           const p = partners[0];
-          prefill.first_name = (p.firstname && p.firstname !== false) ? p.firstname : "";
-          prefill.last_name = (p.lastname && p.lastname !== false) ? p.lastname : "";
+          prefill.first_name =
+            p.firstname && p.firstname !== false ? p.firstname : "";
+          prefill.last_name =
+            p.lastname && p.lastname !== false ? p.lastname : "";
           if (!prefill.email) prefill.email = p.email || "";
           if (!prefill.phone) prefill.phone = p.phone || "";
         }
@@ -555,9 +557,10 @@ app.post(
       }
       const lead = leads[0];
       const token = generateToken(id);
-      const baseUrl = req.get("host");
-      const protocol = req.protocol;
-      const link = `${protocol}://${baseUrl}/pms?lead_id=${id}&token=${token}`;
+      const baseUrl = process.env.BASE_URL
+        ? process.env.BASE_URL.replace(/\/$/, "")
+        : `${req.protocol}://${req.get("host")}`;
+      const link = `${baseUrl}/pms?lead_id=${id}&token=${token}`;
 
       // Write link back to crm.lead so it's visible on the CRM record
       try {
