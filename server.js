@@ -208,26 +208,11 @@ app.get("/pms", async (req, res) => {
     const lead = leads[0];
     const partnerId = lead.partner_id?.[0] || null;
 
-    // Build prefill from lead fields
-    const fullName = lead.partner_name || lead.partner_id?.[1] || "";
-    let prefillFirstName = "";
-    let prefillLastName = "";
-    if (fullName) {
-      if (fullName.includes(",")) {
-        // "Last, First" format
-        const [last, ...rest] = fullName.split(/,\s*/);
-        prefillLastName = last.trim();
-        prefillFirstName = rest.join(" ").trim();
-      } else {
-        const words = fullName.trim().split(/\s+/);
-        prefillLastName = words.length >= 2 ? words[words.length - 1] : "";
-        prefillFirstName = words.length >= 2 ? words.slice(0, -1).join(" ") : fullName;
-      }
-    }
+    // Build prefill — start with lead-level values
     const prefill = {
-      name: fullName,
-      first_name: prefillFirstName,
-      last_name: prefillLastName,
+      name: lead.partner_name || lead.partner_id?.[1] || "",
+      first_name: "",
+      last_name: "",
       email: lead.email_from || "",
       phone: lead.phone || "",
       address: [
@@ -240,21 +225,38 @@ app.get("/pms", async (req, res) => {
         .join(", "),
     };
 
-    // Enrich email/phone from res.partner if missing on lead
-    if (partnerId && (!prefill.email || !prefill.phone)) {
+    // Enrich from res.partner — fetch firstname/lastname directly
+    if (partnerId) {
       try {
         const partners = await odooExecute(
           "res.partner",
           "search_read",
           [[["id", "=", partnerId]]],
-          { fields: ["email", "phone"], limit: 1 },
+          { fields: ["firstname", "lastname", "email", "phone"], limit: 1 },
         );
         if (partners?.length > 0) {
-          if (!prefill.email) prefill.email = partners[0].email || "";
-          if (!prefill.phone) prefill.phone = partners[0].phone || "";
+          const p = partners[0];
+          prefill.first_name = (p.firstname && p.firstname !== false) ? p.firstname : "";
+          prefill.last_name = (p.lastname && p.lastname !== false) ? p.lastname : "";
+          if (!prefill.email) prefill.email = p.email || "";
+          if (!prefill.phone) prefill.phone = p.phone || "";
         }
       } catch (e) {
         console.warn("Partner enrich warning:", e.message);
+      }
+    }
+
+    // Fallback: split full name if partner fields were empty
+    if (!prefill.first_name && !prefill.last_name && prefill.name) {
+      if (prefill.name.includes(",")) {
+        const [last, ...rest] = prefill.name.split(/,\s*/);
+        prefill.last_name = last.trim();
+        prefill.first_name = rest.join(" ").trim();
+      } else {
+        const words = prefill.name.trim().split(/\s+/);
+        prefill.last_name = words.length >= 2 ? words[words.length - 1] : "";
+        prefill.first_name =
+          words.length >= 2 ? words.slice(0, -1).join(" ") : prefill.name;
       }
     }
 
