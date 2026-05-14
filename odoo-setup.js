@@ -318,13 +318,17 @@ async function main() {
 
   // ── Step 5: Build the PMS Questionnaire page XML ──────────────────────────
   const arch = `<data>
+  <!-- CRM link fields on the main form body (always visible, before the notebook) -->
+  <xpath expr="//notebook" position="before">
+    <group string="CRM Link" name="pms_crm_link">
+      <field name="x_pms_crm_lead_id" string="CRM Lead"/>
+      <field name="x_pms_partner_id"  string="Client (Partner)"/>
+    </group>
+  </xpath>
+
+  <!-- PMS Questionnaire tab — questionnaire data only -->
   <xpath expr="//notebook" position="inside">
     <page string="PMS Questionnaire" name="pms_questionnaire">
-
-      <group string="CRM Link">
-        <field name="x_pms_crm_lead_id" string="CRM Lead"/>
-        <field name="x_pms_partner_id"  string="Client (Partner)"/>
-      </group>
 
       <separator string="Section A — Client &amp; Site Information"/>
       <group>
