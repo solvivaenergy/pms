@@ -6,6 +6,7 @@
   <title>Solviva PMS — Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     :root {
       --primary: #1f522b;
@@ -232,7 +233,10 @@
           <h2 style="margin:0;border:none;padding:0;">Leads with PMS Link Generated</h2>
           <p style="margin:0.25rem 0 0;font-size:0.82rem;color:var(--muted);">CRM leads where a questionnaire link has been sent</p>
         </div>
-        <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadLinkedLeads()" id="linkedLeadsRefreshBtn">Refresh</button>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn" style="font-size:0.8rem;padding:0.4rem 0.9rem;background:var(--lime);color:var(--primary);font-weight:700;" onclick="exportLinkedLeads()" id="linkedLeadsExportBtn">↓ Export Excel</button>
+          <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadLinkedLeads()" id="linkedLeadsRefreshBtn">Refresh</button>
+        </div>
       </div>
       <div id="linkedLeadsToast" class="toast"></div>
       <div class="table-wrap">
@@ -262,7 +266,10 @@
           <h2 style="margin:0;border:none;padding:0;">All Maintenance App Records</h2>
           <p style="margin:0.25rem 0 0;font-size:0.82rem;color:var(--muted);">All records from the Odoo Maintenance App</p>
         </div>
-        <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadRequests()" id="refreshBtn">Refresh</button>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn" style="font-size:0.8rem;padding:0.4rem 0.9rem;background:var(--lime);color:var(--primary);font-weight:700;" onclick="exportRequests()" id="requestsExportBtn">↓ Export Excel</button>
+          <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadRequests()" id="refreshBtn">Refresh</button>
+        </div>
       </div>
       <div id="requestsToast" class="toast"></div>
       <div class="table-wrap">
@@ -297,6 +304,8 @@
 
 <script>
   let authToken = localStorage.getItem("pms_auth_token") || "";
+  let linkedLeadsData = [];
+  let requestsData = [];
 
   // ── Login ─────────────────────────────────────────────────
   async function doLogin() {
@@ -458,6 +467,7 @@
       if (!res.ok) throw new Error(data.error || "Failed to load.");
 
       const leads = data.leads || [];
+      linkedLeadsData = leads;
       if (leads.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No leads with PMS links yet.</td></tr>';
         return;
@@ -504,6 +514,7 @@
       if (!res.ok) throw new Error(data.error || "Failed to load.");
 
       const reqs = data.requests || [];
+      requestsData = reqs;
       if (reqs.length === 0) {
         tbody.innerHTML = '<tr><td colspan="14" class="table-empty">No maintenance records found.</td></tr>';
         return;
@@ -568,6 +579,51 @@
       toast.textContent = err.message;
       btn.disabled = false; btn.textContent = orig;
     }
+  }
+
+  function exportLinkedLeads() {
+    if (!linkedLeadsData.length) { alert("No data to export. Please wait for the table to load."); return; }
+    const rows = linkedLeadsData.map(l => ({
+      "Lead #": l.id,
+      "Lead Name": l.name || "",
+      "Client": l.partner_name || (Array.isArray(l.partner_id) ? l.partner_id[1] : "") || "",
+      "Email": l.email_from || "",
+      "Stage": l.stage_id ? l.stage_id[1] : "",
+      "Questionnaire Link": l.x_pms_questionnaire_link || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PMS Leads");
+    XLSX.writeFile(wb, `PMS_Leads_${new Date().toISOString().split("T")[0]}.xlsx`);
+  }
+
+  function exportRequests() {
+    if (!requestsData.length) { alert("No data to export. Please wait for the table to load."); return; }
+    const rows = requestsData.map(r => {
+      const clientName = (r.x_pms_last_name || r.x_pms_first_name)
+        ? ((r.x_pms_last_name || "") + (r.x_pms_last_name && r.x_pms_first_name ? ", " : "") + (r.x_pms_first_name || ""))
+        : (Array.isArray(r.x_pms_partner_id) && r.x_pms_partner_id[1] ? r.x_pms_partner_id[1] : "");
+      return {
+        "#": r.id,
+        "Request Name": r.name || "",
+        "Client": clientName,
+        "Email": r.x_pms_email || "",
+        "Contact": r.x_pms_contact_number || "",
+        "Site Address": r.x_pms_site_address || "",
+        "Scheduled Date": r.schedule_date ? r.schedule_date.split(" ")[0] : "",
+        "Time Slot": r.x_pms_preferred_time_slot || "",
+        "Panel Location": r.x_pms_panel_location || "",
+        "Issues": r.x_pms_has_issues === true ? "Yes" : r.x_pms_has_issues === false ? "No" : "",
+        "Lead #": r.x_pms_lead_id ? String(Array.isArray(r.x_pms_lead_id) ? r.x_pms_lead_id[0] : r.x_pms_lead_id) : "",
+        "Type": r.maintenance_type || "",
+        "Stage": r.stage_id ? r.stage_id[1] : "",
+        "Submitted": r.request_date || "",
+      };
+    });
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Maintenance Records");
+    XLSX.writeFile(wb, `PMS_Maintenance_Records_${new Date().toISOString().split("T")[0]}.xlsx`);
   }
 
   function escHtml(str) {
