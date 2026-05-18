@@ -317,7 +317,99 @@ async function main() {
   }
 
   // ── Step 5: Build the PMS Questionnaire page XML ──────────────────────────
+  // Look up CRM lead list action ID for smart button
+  let crmActionId = false;
+  try {
+    const crmActions = await execute(
+      "ir.actions.act_window",
+      "search_read",
+      [
+        [
+          ["res_model", "=", "crm.lead"],
+          ["view_mode", "like", "list"],
+        ],
+      ],
+      { fields: ["id", "name"], limit: 5 },
+    );
+    if (crmActions?.length > 0) {
+      crmActionId = crmActions[0].id;
+      console.log(
+        `  CRM lead action id=${crmActionId} (${crmActions[0].name})`,
+      );
+    }
+  } catch (e) {
+    console.warn("  Could not find CRM action:", e.message);
+  }
+
+  // Look up contacts action ID for smart button
+  let contactsActionId = false;
+  try {
+    const contactActions = await execute(
+      "ir.actions.act_window",
+      "search_read",
+      [
+        [
+          ["res_model", "=", "res.partner"],
+          ["view_mode", "like", "list"],
+        ],
+      ],
+      { fields: ["id", "name"], limit: 5 },
+    );
+    if (contactActions?.length > 0) {
+      contactsActionId = contactActions[0].id;
+      console.log(
+        `  Contacts action id=${contactsActionId} (${contactActions[0].name})`,
+      );
+    }
+  } catch (e) {
+    console.warn("  Could not find Contacts action:", e.message);
+  }
+
+  // Look up maintenance.request action ID for CRM lead smart button
+  let maintActionId = false;
+  try {
+    const maintActions = await execute(
+      "ir.actions.act_window",
+      "search_read",
+      [
+        [
+          ["res_model", "=", "maintenance.request"],
+          ["view_mode", "like", "list"],
+        ],
+      ],
+      { fields: ["id", "name"], limit: 5 },
+    );
+    if (maintActions?.length > 0) {
+      maintActionId = maintActions[0].id;
+      console.log(
+        `  Maintenance action id=${maintActionId} (${maintActions[0].name})`,
+      );
+    }
+  } catch (e) {
+    console.warn("  Could not find Maintenance action:", e.message);
+  }
+
   const arch = `<data>
+  <!-- Smart buttons: CRM Lead + Contact at the top of the maintenance request form -->
+  <xpath expr="//sheet/div[1]" position="before">
+    <div class="oe_button_box" name="button_box">
+      <button class="oe_stat_button" type="action"
+        name="${crmActionId || 0}"
+        icon="fa-handshake-o"
+        invisible="not x_pms_crm_lead_id"
+        context="{'res_id': x_pms_crm_lead_id[0], 'view_type': 'form'}">
+        <field name="x_pms_crm_lead_id" string="CRM Lead" widget="statinfo"/>
+      </button>
+      <button class="oe_stat_button" type="action"
+        name="${contactsActionId || 0}"
+        icon="fa-user"
+        invisible="not x_pms_partner_id"
+        context="{'res_id': x_pms_partner_id[0], 'view_type': 'form'}">
+        <field name="x_pms_partner_id" string="Contact" widget="statinfo"/>
+      </button>
+    </div>
+  </xpath>
+
   <!-- CRM link fields on the main form body (always visible, before the notebook) -->
   <xpath expr="//notebook" position="before">
     <group string="CRM Link" name="pms_crm_link">
@@ -448,8 +540,71 @@ async function main() {
       );
     }
 
-    // ── Step 8: Add PMS link field to the CRM lead form view ────────────────
-    console.log("\n═══ Step 8: Adding PMS link to CRM lead form view ═══");
+    // ── Step 8: Add PMS tab + smart button to the CRM lead form view ──────
+    console.log(
+      "\n═══ Step 8: Adding PMS tab + smart button to CRM lead form view ═══",
+    );
+
+    // Ensure x_pms_request_ids Many2many field exists on crm.lead
+    const [reqIdsField] = await execute(
+      "ir.model.fields",
+      "search_read",
+      [
+        [
+          ["model_id", "=", crmModel.id],
+          ["name", "=", "x_pms_request_ids"],
+        ],
+      ],
+      { fields: ["id", "ttype"], limit: 1 },
+    );
+    if (reqIdsField && reqIdsField.ttype === "many2many") {
+      console.log("  SKIP    x_pms_request_ids (already exists as many2many)");
+    } else {
+      // Must remove field from views before deleting it
+      if (reqIdsField) {
+        const [oldCrmView] = await execute(
+          "ir.ui.view",
+          "search_read",
+          [[["name", "=", "crm.lead.form.pms.link"]]],
+          { fields: ["id"], limit: 1 },
+        );
+        if (oldCrmView) {
+          await execute("ir.ui.view", "unlink", [[oldCrmView.id]]);
+          console.log(
+            `  DELETED old CRM view id=${oldCrmView.id} (clearing field references)`,
+          );
+        }
+        await execute("ir.model.fields", "unlink", [[reqIdsField.id]]);
+        console.log(
+          `  DELETED old x_pms_request_ids (was ${reqIdsField.ttype})`,
+        );
+      }
+      // Find maintenance.request model id
+      const [maintModel] = await execute(
+        "ir.model",
+        "search_read",
+        [[["model", "=", "maintenance.request"]]],
+        { fields: ["id"], limit: 1 },
+      );
+      if (maintModel) {
+        const fid = await execute("ir.model.fields", "create", [
+          {
+            name: "x_pms_request_ids",
+            field_description: "PMS Requests",
+            model_id: crmModel.id,
+            ttype: "many2many",
+            relation: "maintenance.request",
+            relation_table: "x_crm_lead_pms_request_rel",
+            column1: "lead_id",
+            column2: "request_id",
+            store: true,
+          },
+        ]);
+        console.log(
+          `  CREATE  x_pms_request_ids (many2many) on crm.lead  id=${fid}`,
+        );
+      }
+    }
     const crmFormViews = await execute(
       "ir.ui.view",
       "search_read",
@@ -470,11 +625,32 @@ async function main() {
 
       const CRM_VIEW_NAME = "crm.lead.form.pms.link";
       const crmArch = `<data>
+  <!-- PMS Requests smart button on CRM lead form -->
+  <xpath expr="//div[hasclass('oe_button_box')]" position="inside">
+    <button class="oe_stat_button" type="action"
+      name="${maintActionId || 0}"
+      icon="fa-wrench"
+      context="{'search_default_x_pms_crm_lead_id': id}">
+      <field name="x_pms_request_ids" widget="statinfo" string="PMS Requests"/>
+    </button>
+  </xpath>
+  <!-- PMS tab on CRM lead form -->
   <xpath expr="//notebook" position="inside">
     <page string="PMS" name="pms_tab">
-      <group string="PMS Questionnaire">
+      <group string="PMS Questionnaire Link">
         <field name="x_pms_questionnaire_link" string="Questionnaire URL" widget="url" readonly="1"/>
       </group>
+      <separator string="PMS Maintenance Requests"/>
+      <field name="x_pms_request_ids" readonly="1">
+        <list>
+          <field name="name" string="Request"/>
+          <field name="stage_id" string="Stage"/>
+          <field name="x_pms_preferred_date" string="Preferred Date"/>
+          <field name="x_pms_last_name" string="Last Name"/>
+          <field name="x_pms_first_name" string="First Name"/>
+          <field name="create_date" string="Submitted" optional="show"/>
+        </list>
+      </field>
     </page>
   </xpath>
 </data>`;

@@ -749,10 +749,7 @@ app.delete(
           { x_pms_request_ids: [[5]], x_pms_questionnaire_link: false },
         ]);
       } catch (linkErr) {
-        console.warn(
-          "Could not clear CRM lead PMS fields:",
-          linkErr.message,
-        );
+        console.warn("Could not clear CRM lead PMS fields:", linkErr.message);
       }
 
       console.log(
@@ -766,12 +763,8 @@ app.delete(
   },
 );
 
-// List recently submitted PMS requests
+// List all maintenance.request records
 app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
-  const domain = [
-    ["maintenance_type", "=", "preventive"],
-    ["x_pms_submission_token", "!=", false],
-  ];
   const customFields = [
     "x_pms_last_name",
     "x_pms_first_name",
@@ -786,6 +779,8 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
   const standardFields = [
     "id",
     "name",
+    "partner_id",
+    "maintenance_type",
     "request_date",
     "schedule_date",
     "stage_id",
@@ -795,11 +790,11 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
     const requests = await odooExecute(
       "maintenance.request",
       "search_read",
-      [domain],
+      [[]],
       {
         fields: [...standardFields, ...customFields],
         order: "create_date desc",
-        limit: 100,
+        limit: 500,
       },
     );
     return res.json({ requests });

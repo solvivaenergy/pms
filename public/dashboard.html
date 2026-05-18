@@ -258,7 +258,10 @@
     <!-- Submissions Table Panel -->
     <div class="panel">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:0.5rem;border-bottom:2px solid var(--lime);">
-        <h2 style="margin:0;border:none;padding:0;">Recent PMS Submissions</h2>
+        <div>
+          <h2 style="margin:0;border:none;padding:0;">All Maintenance App Records</h2>
+          <p style="margin:0.25rem 0 0;font-size:0.82rem;color:var(--muted);">All records from the Odoo Maintenance App</p>
+        </div>
         <button class="btn btn-primary" style="font-size:0.8rem;padding:0.4rem 0.9rem;" onclick="loadRequests()" id="refreshBtn">Refresh</button>
       </div>
       <div id="requestsToast" class="toast"></div>
@@ -267,21 +270,23 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Name</th>
+              <th>Request Name</th>
+              <th>Client</th>
               <th>Email</th>
               <th>Contact</th>
               <th>Site Address</th>
-              <th>Preferred Date</th>
+              <th>Scheduled Date</th>
               <th>Time Slot</th>
               <th>Panel Location</th>
               <th>Issues</th>
               <th>Lead</th>
+              <th>Type</th>
               <th>Stage</th>
               <th>Submitted</th>
             </tr>
           </thead>
           <tbody id="requestsBody">
-            <tr><td colspan="12" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>
+            <tr><td colspan="14" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -500,30 +505,42 @@
 
       const reqs = data.requests || [];
       if (reqs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="table-empty">No PMS submissions yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="14" class="table-empty">No maintenance records found.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = reqs.map(r => `
+      tbody.innerHTML = reqs.map(r => {
+        const pmsName = (r.x_pms_last_name || r.x_pms_first_name)
+          ? escHtml((r.x_pms_last_name || "") + (r.x_pms_last_name && r.x_pms_first_name ? ", " : "") + (r.x_pms_first_name || ""))
+          : (Array.isArray(r.partner_id) && r.partner_id[1] ? escHtml(r.partner_id[1]) : '<span style="color:var(--muted)">—</span>');
+        const typeLabel = r.maintenance_type === 'preventive' ? 'Preventive' : r.maintenance_type === 'corrective' ? 'Corrective' : escHtml(r.maintenance_type || '—');
+        const typeBadge = r.maintenance_type === 'preventive'
+          ? '<span class="badge badge-ok">Preventive</span>'
+          : r.maintenance_type === 'corrective'
+            ? '<span class="badge badge-issues">Corrective</span>'
+            : `<span class="badge badge-stage">${typeLabel}</span>`;
+        return `
         <tr>
           <td style="font-size:0.78rem;color:var(--muted);">${r.id}</td>
-          <td><strong>${escHtml((r.x_pms_last_name || "") + ", " + (r.x_pms_first_name || ""))}</strong></td>
-          <td style="font-size:0.82rem;">${escHtml(r.x_pms_email || "—")}</td>
-          <td style="font-size:0.82rem;">${escHtml(r.x_pms_contact_number || "—")}</td>
-          <td style="font-size:0.8rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.x_pms_site_address || "")}">${escHtml(r.x_pms_site_address || "—")}</td>
-          <td style="white-space:nowrap;">${escHtml(r.schedule_date ? r.schedule_date.split(" ")[0] : "—")}</td>
-          <td style="text-transform:capitalize;">${escHtml(r.x_pms_preferred_time_slot || "—")}</td>
-          <td style="font-size:0.8rem;">${escHtml(r.x_pms_panel_location || "—")}</td>
-          <td>${r.x_pms_has_issues ? '<span class="badge badge-issues">Yes</span>' : '<span class="badge badge-ok">No</span>'}</td>
+          <td style="font-size:0.82rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.name || '')}">${escHtml(r.name || '—')}</td>
+          <td><strong>${pmsName}</strong></td>
+          <td style="font-size:0.82rem;">${escHtml(r.x_pms_email || '—')}</td>
+          <td style="font-size:0.82rem;">${escHtml(r.x_pms_contact_number || '—')}</td>
+          <td style="font-size:0.8rem;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escHtml(r.x_pms_site_address || '')}">${escHtml(r.x_pms_site_address || '—')}</td>
+          <td style="white-space:nowrap;">${escHtml(r.schedule_date ? r.schedule_date.split(' ')[0] : '—')}</td>
+          <td style="text-transform:capitalize;">${escHtml(r.x_pms_preferred_time_slot || '—')}</td>
+          <td style="font-size:0.8rem;">${escHtml(r.x_pms_panel_location || '—')}</td>
+          <td>${r.x_pms_has_issues === true ? '<span class="badge badge-issues">Yes</span>' : r.x_pms_has_issues === false && r.x_pms_submission_token ? '<span class="badge badge-ok">No</span>' : '<span style="color:var(--muted)">—</span>'}</td>
           <td style="font-size:0.78rem;">${r.x_pms_lead_id ? '<span class="badge badge-stage">#' + escHtml(String(Array.isArray(r.x_pms_lead_id) ? r.x_pms_lead_id[0] : r.x_pms_lead_id)) + '</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${typeBadge}</td>
           <td>${r.stage_id ? '<span class="badge badge-stage">' + escHtml(r.stage_id[1]) + '</span>' : '—'}</td>
-          <td style="white-space:nowrap;font-size:0.8rem;">${escHtml(r.request_date || "—")}</td>
-        </tr>
-      `).join("");
+          <td style="white-space:nowrap;font-size:0.8rem;">${escHtml(r.request_date || '—')}</td>
+        </tr>`;
+      }).join("");
     } catch (err) {
       toast.className = "toast error";
       toast.textContent = err.message;
-      tbody.innerHTML = '<tr><td colspan="12" class="table-empty">Failed to load requests.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="14" class="table-empty">Failed to load requests.</td></tr>';
     } finally {
       btn.disabled = false; btn.textContent = "Refresh";
     }
