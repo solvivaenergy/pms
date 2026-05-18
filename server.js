@@ -742,15 +742,15 @@ app.delete(
         deleted = ids.length;
       }
 
-      // Clear the x_pms_request_ids many2many on the crm.lead
+      // Clear x_pms_request_ids many2many and x_pms_questionnaire_link on the crm.lead
       try {
         await odooExecute("crm.lead", "write", [
           [leadId],
-          { x_pms_request_ids: [[5]] },
+          { x_pms_request_ids: [[5]], x_pms_questionnaire_link: false },
         ]);
       } catch (linkErr) {
         console.warn(
-          "Could not clear x_pms_request_ids on lead:",
+          "Could not clear CRM lead PMS fields:",
           linkErr.message,
         );
       }
