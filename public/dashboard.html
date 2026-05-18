@@ -210,19 +210,19 @@
 
       <div style="margin-top:1rem; display:flex; gap:0.75rem; align-items:flex-end; flex-wrap:wrap;">
         <div class="field">
-          <label for="leadIdInput">Or enter Odoo Lead ID directly</label>
-          <input type="text" id="leadIdInput" placeholder="e.g. 84" />
+          <label for="leadIdInput">Or enter Odoo Lead ID(s) directly <span style="font-weight:400;color:var(--muted);">(comma-separated for bulk)</span></label>
+          <input type="text" id="leadIdInput" placeholder="e.g. 84 or 84, 85, 86" />
         </div>
         <button class="btn btn-secondary" onclick="generateLink()" id="generateBtn">Generate Link</button>
       </div>
 
       <div class="link-box" id="linkBox">
-        <div class="partner-label" id="linkPartnerLabel"></div>
-        <div class="link-text-row">
-          <div class="link-text" id="linkText"></div>
-          <button class="btn-copy" onclick="copyLink()">Copy</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+          <div class="partner-label" id="linkPartnerLabel" style="margin:0;"></div>
+          <button class="btn-copy" id="copyAllBtn" onclick="copyAllLinks()" style="display:none;">Copy All</button>
         </div>
-        <div class="copy-confirmation" id="copyConfirm">✓ Link copied to clipboard</div>
+        <div id="linkItemsContainer"></div>
+        <div class="copy-confirmation" id="copyConfirm">✓ Copied to clipboard</div>
       </div>
     </div>
 
@@ -412,40 +412,84 @@
     const toast = document.getElementById("genToast");
     toast.className = "toast";
 
-    const leadId = (document.getElementById("leadIdInput").value || "").trim();
-    if (!leadId) { toast.className = "toast error"; toast.textContent = "Please search for and select a lead, or enter a Lead ID."; return; }
+    const rawInput = (document.getElementById("leadIdInput").value || "").trim();
+    if (!rawInput) { toast.className = "toast error"; toast.textContent = "Please search for and select a lead, or enter a Lead ID."; return; }
+
+    const leadIds = rawInput.split(",").map(s => s.trim()).filter(s => s.length > 0);
+    const invalidIds = leadIds.filter(id => isNaN(parseInt(id, 10)) || parseInt(id, 10) <= 0);
+    if (invalidIds.length > 0) { toast.className = "toast error"; toast.textContent = `Invalid Lead ID(s): ${invalidIds.join(", ")}`; return; }
 
     const btn = document.getElementById("generateBtn");
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating…';
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Generating${leadIds.length > 1 ? ` ${leadIds.length} links` : ``}…`;
 
-    try {
-      const res = await fetch("/pms/dashboard/generate-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
-        body: JSON.stringify({ lead_id: leadId }),
-      });
-      if (res.status === 401) { doLogout(); return; }
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to generate link.");
+    const results = [];
+    const errors = [];
 
-      document.getElementById("linkPartnerLabel").textContent =
-        `Link for: ${data.partner_name} (${data.partner_email || "no email"}) — Lead #${data.lead_id}`;
-      document.getElementById("linkText").textContent = data.link;
+    for (const leadId of leadIds) {
+      try {
+        const res = await fetch("/pms/dashboard/generate-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${authToken}` },
+          body: JSON.stringify({ lead_id: leadId }),
+        });
+        if (res.status === 401) { doLogout(); return; }
+        const data = await res.json();
+        if (!res.ok) errors.push(`Lead #${leadId}: ${data.error || "Failed"}`);
+        else results.push(data);
+      } catch (err) {
+        errors.push(`Lead #${leadId}: ${err.message}`);
+      }
+    }
+
+    if (results.length > 0) {
+      const label = document.getElementById("linkPartnerLabel");
+      const container = document.getElementById("linkItemsContainer");
+      const copyAllBtn = document.getElementById("copyAllBtn");
+
+      label.textContent = results.length === 1
+        ? `Link for: ${results[0].partner_name} (${results[0].partner_email || "no email"}) — Lead #${results[0].lead_id}`
+        : `${results.length} link${results.length > 1 ? "s" : ""} generated`;
+
+      container.innerHTML = results.map((data, i) => `
+        <div class="link-text-row" ${i < results.length - 1 ? 'style="margin-bottom:0.75rem;padding-bottom:0.75rem;border-bottom:1px solid #e3e8ef;"' : ''}>
+          <div style="flex:1;min-width:0;">
+            ${results.length > 1 ? `<div style="font-size:0.78rem;color:var(--primary);font-weight:700;margin-bottom:0.25rem;">Lead #${data.lead_id} — ${escHtml(data.partner_name || "")}</div>` : ""}
+            <div class="link-text">${escHtml(data.link)}</div>
+          </div>
+          <button class="btn-copy" onclick="copySingleLink(this, '${escHtml(data.link).replace(/'/g, "&#39;")}')">Copy</button>
+        </div>`).join("");
+
+      copyAllBtn.style.display = results.length > 1 ? "inline-block" : "none";
       document.getElementById("linkBox").style.display = "block";
       document.getElementById("copyConfirm").style.display = "none";
-    } catch (err) {
-      toast.className = "toast error";
-      toast.textContent = err.message;
-    } finally {
-      btn.disabled = false; btn.textContent = "Generate Link";
     }
+
+    if (errors.length > 0) {
+      toast.className = "toast error";
+      toast.textContent = errors.join(" | ");
+    }
+
+    btn.disabled = false; btn.textContent = "Generate Link";
   }
 
-  function copyLink() {
-    const link = document.getElementById("linkText").textContent;
+  function copySingleLink(btn, link) {
     navigator.clipboard.writeText(link).then(() => {
-      document.getElementById("copyConfirm").style.display = "block";
-      setTimeout(() => { document.getElementById("copyConfirm").style.display = "none"; }, 2500);
+      const confirm = document.getElementById("copyConfirm");
+      confirm.textContent = "✓ Link copied to clipboard";
+      confirm.style.display = "block";
+      setTimeout(() => { confirm.style.display = "none"; }, 2500);
+    });
+  }
+
+  function copyAllLinks() {
+    const links = Array.from(document.querySelectorAll("#linkItemsContainer .link-text"))
+      .map(el => el.textContent).join("\n");
+    navigator.clipboard.writeText(links).then(() => {
+      const confirm = document.getElementById("copyConfirm");
+      confirm.textContent = "✓ All links copied to clipboard";
+      confirm.style.display = "block";
+      setTimeout(() => { confirm.style.display = "none"; }, 2500);
     });
   }
 
