@@ -512,7 +512,7 @@
       tbody.innerHTML = reqs.map(r => {
         const pmsName = (r.x_pms_last_name || r.x_pms_first_name)
           ? escHtml((r.x_pms_last_name || "") + (r.x_pms_last_name && r.x_pms_first_name ? ", " : "") + (r.x_pms_first_name || ""))
-          : (Array.isArray(r.partner_id) && r.partner_id[1] ? escHtml(r.partner_id[1]) : '<span style="color:var(--muted)">—</span>');
+          : (Array.isArray(r.x_pms_partner_id) && r.x_pms_partner_id[1] ? escHtml(r.x_pms_partner_id[1]) : '<span style="color:var(--muted)">—</span>');
         const typeLabel = r.maintenance_type === 'preventive' ? 'Preventive' : r.maintenance_type === 'corrective' ? 'Corrective' : escHtml(r.maintenance_type || '—');
         const typeBadge = r.maintenance_type === 'preventive'
           ? '<span class="badge badge-ok">Preventive</span>'

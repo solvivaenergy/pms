@@ -775,11 +775,11 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
     "x_pms_panel_location",
     "x_pms_has_issues",
     "x_pms_lead_id",
+    "x_pms_partner_id",
   ];
   const standardFields = [
     "id",
     "name",
-    "partner_id",
     "maintenance_type",
     "request_date",
     "schedule_date",
@@ -787,16 +787,26 @@ app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
   ];
 
   try {
-    const requests = await odooExecute(
-      "maintenance.request",
-      "search_read",
-      [[]],
-      {
+    let requests;
+    try {
+      // Try with custom PMS fields first
+      requests = await odooExecute("maintenance.request", "search_read", [[]], {
         fields: [...standardFields, ...customFields],
         order: "create_date desc",
         limit: 500,
-      },
-    );
+      });
+    } catch (fieldsErr) {
+      // Custom fields may not exist yet — fall back to standard fields only
+      console.warn(
+        "PMS custom fields unavailable, falling back to standard fields:",
+        fieldsErr.message,
+      );
+      requests = await odooExecute("maintenance.request", "search_read", [[]], {
+        fields: standardFields,
+        order: "create_date desc",
+        limit: 500,
+      });
+    }
     return res.json({ requests });
   } catch (err) {
     console.error("List requests error:", err.message);
