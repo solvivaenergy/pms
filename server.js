@@ -715,6 +715,57 @@ app.get(
   },
 );
 
+// Clear PMS maintenance.request records for a given lead (reset for re-simulation)
+app.delete(
+  "/pms/dashboard/clear-pms/:lead_id",
+  requireDashboardAuth,
+  async (req, res) => {
+    const leadId = parseInt(req.params.lead_id, 10);
+    if (isNaN(leadId) || leadId <= 0) {
+      return res.status(400).json({ error: "Invalid lead_id." });
+    }
+
+    try {
+      // Find all maintenance.request records linked to this lead
+      const requests = await odooExecute(
+        "maintenance.request",
+        "search_read",
+        [[["x_pms_lead_id", "=", leadId]]],
+        { fields: ["id"], limit: 100 },
+      );
+
+      const ids = requests.map((r) => r.id);
+      let deleted = 0;
+
+      if (ids.length > 0) {
+        await odooExecute("maintenance.request", "unlink", [ids]);
+        deleted = ids.length;
+      }
+
+      // Clear the x_pms_request_ids many2many on the crm.lead
+      try {
+        await odooExecute("crm.lead", "write", [
+          [leadId],
+          { x_pms_request_ids: [[5]] },
+        ]);
+      } catch (linkErr) {
+        console.warn(
+          "Could not clear x_pms_request_ids on lead:",
+          linkErr.message,
+        );
+      }
+
+      console.log(
+        `Cleared ${deleted} PMS maintenance request(s) for lead ${leadId}`,
+      );
+      return res.json({ success: true, deleted, lead_id: leadId });
+    } catch (err) {
+      console.error("Clear PMS error:", err.message);
+      return res.status(500).json({ error: "Failed to clear PMS records." });
+    }
+  },
+);
+
 // List recently submitted PMS requests
 app.get("/pms/dashboard/requests", requireDashboardAuth, async (req, res) => {
   const domain = [

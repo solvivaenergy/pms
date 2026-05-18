@@ -245,10 +245,11 @@
               <th>Email</th>
               <th>Stage</th>
               <th>Questionnaire Link</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="linkedLeadsBody">
-            <tr><td colspan="6" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>
+            <tr><td colspan="7" class="table-empty"><span class="spinner spinner-dark"></span> Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -453,7 +454,7 @@
 
       const leads = data.leads || [];
       if (leads.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="table-empty">No leads with PMS links yet.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No leads with PMS links yet.</td></tr>';
         return;
       }
       tbody.innerHTML = leads.map(l => `
@@ -466,12 +467,15 @@
           <td style="font-size:0.78rem;">
             <a href="${escHtml(l.x_pms_questionnaire_link)}" target="_blank" style="color:var(--blue);word-break:break-all;">${escHtml(l.x_pms_questionnaire_link)}</a>
           </td>
+          <td>
+            <button class="btn" style="background:#fef2f2;color:var(--red);border:1px solid #fecaca;font-size:0.76rem;padding:0.3rem 0.65rem;" onclick="clearPmsRecords(${l.id}, this)">Reset PMS</button>
+          </td>
         </tr>
       `).join("");
     } catch (err) {
       toast.className = "toast error";
       toast.textContent = err.message;
-      tbody.innerHTML = '<tr><td colspan="6" class="table-empty">Failed to load leads.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="table-empty">Failed to load leads.</td></tr>';
     } finally {
       btn.disabled = false; btn.textContent = "Refresh";
     }
@@ -522,6 +526,30 @@
       tbody.innerHTML = '<tr><td colspan="12" class="table-empty">Failed to load requests.</td></tr>';
     } finally {
       btn.disabled = false; btn.textContent = "Refresh";
+    }
+  }
+
+  async function clearPmsRecords(leadId, btn) {
+    if (!confirm(`Reset PMS for Lead #${leadId}?\n\nThis will delete all maintenance.request records linked to this lead so the questionnaire can be re-submitted.`)) return;
+    const orig = btn.textContent;
+    btn.disabled = true; btn.innerHTML = '<span class="spinner spinner-dark"></span>';
+    try {
+      const res = await fetch(`/pms/dashboard/clear-pms/${leadId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${authToken}` },
+      });
+      if (res.status === 401) { doLogout(); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reset.");
+      const toast = document.getElementById("linkedLeadsToast");
+      toast.className = "toast success";
+      toast.textContent = `Reset complete — ${data.deleted} maintenance request(s) deleted for Lead #${leadId}.`;
+      loadLinkedLeads();
+    } catch (err) {
+      const toast = document.getElementById("linkedLeadsToast");
+      toast.className = "toast error";
+      toast.textContent = err.message;
+      btn.disabled = false; btn.textContent = orig;
     }
   }
 
